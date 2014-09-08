@@ -30,7 +30,7 @@ from .geometry import *
 svg_ns = '{http://www.w3.org/2000/svg}'
 
 # Regex commonly used
-number_re = r'[+-]?\ *\d+(?:\.\d*)?|\.\d+'
+number_re = r'[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?'
 unit_re = r'em|ex|px|in|cm|mm|pt|pc|%'
 
 # Unit converter
@@ -90,7 +90,7 @@ class Transformable:
             op = op.strip()
             # Keep only numbers
             arg = [float(x) for x in
-                    re.findall(r"([+-]?\ *\d+(?:\.\d*)?|\.\d+)", arg)]
+                   re.findall(number_re, arg)]
             print('transform: ' + op + ' '+ str(arg))
 
             if op == 'matrix':
@@ -260,7 +260,7 @@ class Group(Transformable):
             # Apply group matrix to the newly created object
             item.matrix = self.matrix * item.matrix
             item.viewport = self.viewport
-            
+
             self.items.append(item)
             # Recursively append if elt is a <g> (group)
             if elt.tag == svg_ns + 'g':
@@ -334,8 +334,8 @@ class Path(Transformable):
         """Parse path string and build elements list"""
 
         # (?:...) : non-capturing version of regular parentheses
-        pathlst = re.findall(r"([+-]?\ *\d+(?:\.\d*)?|\.\d+|\ *[%s]\ *)"
-                % COMMANDS, pathstr)
+        pathlst = re.findall(number_re + r"|\ *[%s]\ *"
+                             % COMMANDS, pathstr)
 
         pathlst.reverse()
 
@@ -505,7 +505,7 @@ class Ellipse(Transformable):
     '''SVG <ellipse>'''
     # class Ellipse handles the <ellipse> tag
     tag = 'ellipse'
-    
+
     def __init__(self, elt=None):
         Transformable.__init__(self, elt)
         if elt is not None:
@@ -680,4 +680,3 @@ for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
     tag = getattr(cls, 'tag', None)
     if tag:
         svgClass[svg_ns + tag] = cls
-
